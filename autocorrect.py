@@ -8,7 +8,7 @@ candidates = [line.strip().lower() for line in open(sys.argv[2])]
 
 vowels = "aeiou"
 
-def suggest(word, max_tries=1000):
+def suggest(word, max_tries=2500):
 
     blank_mask = [False for i in range(len(word))]
 
@@ -50,18 +50,24 @@ def suggest(word, max_tries=1000):
         last  = word[0]
 
         for i, char in enumerate(word):
-            if char == last and i != len(word) - 1:
+            if char == last:
                 continue
-         
-            num_repeated = i - start if i < len(word) - 1 else (i - start) + 1
+
+            num_repeated = i - start 
+
             if num_repeated > 1:
                 for j in range(1, num_repeated):
-                    mod_word = word[:start] + last * j + "" if i == len(word) - 1 else word[i:]
-                    if mod_word not in tried:
-                        pq.put((mods + 1, (mod_word, blank_mask)))
+			mod_word = word[0:start] + (last * j) + word[i:]
+			if mod_word not in tried:
+			    pq.put((mods + 1, (mod_word, blank_mask)))
             
             start = i
             last  = char
+
+        if i - start > 1:
+	    mod_word = word[0:start] + (last * (num_repeated - 1))
+	    if mod_word not in tried:
+	        pq.put((mods + 1, (mod_word, blank_mask)))
 
     return "NO SUGGESTION"
 
