@@ -6,20 +6,19 @@ import sys, Queue
 dictionary = [line.strip().lower() for line in open(sys.argv[1])]
 candidates = [line.strip().lower() for line in open(sys.argv[2])]
 
-vowels = "aeiou"
+max_tries = int(sys.argv[3]) if len(sys.argv) > 3 else 2500
 
-def suggest(word, max_tries=2500):
+alphabet = "abcdefghijklmnopqrstufwxyz"
 
-    blank_mask = [False for i in range(len(word))]
+def suggest(word, max_tries):
 
     pq = Queue.PriorityQueue()
-    pq.put((0, (word, blank_mask)))
+    pq.put((0, word))
 
     tried = set()
 
     while pq.qsize() > 0 and len(tried) < max_tries:
-        mods, pair = pq.get()
-        word, mask = pair
+        mods, word = pq.get()
 
         tried.add(word)
 
@@ -30,46 +29,39 @@ def suggest(word, max_tries=2500):
         if pq.qsize() > max_tries - len(tried):
             continue
 
-        # Swap vowels
+        neighbors = []
+
+        # Heuristic: Try swaps first since they're common
         for i, c in enumerate(word):
-            if c in vowels and not mask[i]:
-                mask_copy    = mask[:]
-                mask_copy[i] = True
+            if i + 1 < len(word):
+                neighbors.append(word[:i] + word[i + 1] + word[i] + word[i+2:])
 
-                for v in vowels:
-                    if v == c:
-                        continue
+        for neighbor in neighbors:
+            if neighbor not in tried:
+                pq.put((mods + .5, neighbor))
 
-                    mod_word = word[:i] + v + word[i+1:]
+        neighbors = []
 
-                    if mod_word not in tried:
-                        pq.put((mods + 1, (mod_word, mask_copy)))
+        # Now do a principled single-edit neighbor enumeration
+        for i, c in enumerate(word):
+            for a in alphabet:
+                # Won't you be my (character changed) neighbor
+                neighbors.append(word[:i] + a + word[i+1:])
+                # Won't you be my (character added) neighbor
+                neighbors.append(word[:i] + a + word[i:])
 
-        # Shorten runs of repeated characters:
-        start = 0
-        last  = word[0]
+            # Won't you be my (character deleted) neighbor
+            neighbors.append(word[:i] + word[i+1:])
 
-        for i, char in enumerate(word):
-            if char == last:
-                continue
+        # Neighbors for adding a character at the end
+        for a in alphabet:
+            neighbors.append(word + a)
 
-            num_repeated = i - start 
+        for neighbor in neighbors:
+            if neighbor not in tried:
+                pq.put((mods + 1, neighbor))
 
-            if num_repeated > 1:
-                for j in range(1, num_repeated):
-			mod_word = word[0:start] + (last * j) + word[i:]
-			if mod_word not in tried:
-			    pq.put((mods + 1, (mod_word, blank_mask)))
-            
-            start = i
-            last  = char
-
-        if i - start > 1:
-	    mod_word = word[0:start] + (last * (num_repeated - 1))
-	    if mod_word not in tried:
-	        pq.put((mods + 1, (mod_word, blank_mask)))
-
-    return "NO SUGGESTION"
+    return "UNKNOWN"
 
 for candidate in candidates:
-    print(suggest(candidate))
+    print(candidate + ": " + suggest(candidate, max_tries))
