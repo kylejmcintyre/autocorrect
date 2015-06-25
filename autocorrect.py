@@ -64,4 +64,4 @@ def suggest(word, max_tries):
     return "UNKNOWN"
 
 for candidate in candidates:
-    print(candidate + ": " + suggest(candidate, max_tries))
+    print(suggest(candidate, max_tries))
