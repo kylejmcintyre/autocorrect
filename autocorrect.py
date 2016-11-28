@@ -8,7 +8,7 @@ candidates = [line.strip().lower() for line in open(sys.argv[2])]
 
 max_tries = int(sys.argv[3]) if len(sys.argv) > 3 else 2500
 
-alphabet = "abcdefghijklmnopqrstufwxyz"
+alphabet = "abcdefghijklmnopqrstuvwxyz"
 
 def suggest(word, max_tries):
 
